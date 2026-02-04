@@ -63,13 +63,9 @@ export default function Hero() {
   const handleTrackBus = (e) => {
     e.preventDefault();
     if (busNumber.trim().length > 0) {
-      navigate(`/details/${encodeURIComponent(busNumber.trim())}`);
+      navigate(`/track?busNumber=${encodeURIComponent(busNumber.trim())}&autoStart=true`);
     } else if (fromCity.trim().length > 0 && toCity.trim().length > 0) {
-      navigate(
-        `/details?from=${encodeURIComponent(fromCity.trim())}&to=${encodeURIComponent(
-          toCity.trim()
-        )}`
-      );
+      navigate(`/buses?from=${encodeURIComponent(fromCity.trim())}&to=${encodeURIComponent(toCity.trim())}`);
     } else {
       alert("Please enter either both cities or the bus number.");
     }
@@ -211,7 +207,7 @@ export default function Hero() {
       </section>
 
       {/* CRI Section */}
-      <section className="py-24 px-6 bg-gradient-to-b from-green-50 via-white to-green-100" id="c02">
+      <section className="py-24 px-6 bg-gradient-to-b from-green-50 via-white to-green-100" id="co2">
         <div className="max-w-7xl mx-auto bg-white rounded-3xl shadow-xl p-12 md:p-16 space-y-20">
           <div className="text-center max-w-4xl mx-auto space-y-6">
             <h2 className="text-5xl font-bold text-green-900 tracking-tight">
@@ -471,14 +467,8 @@ export default function Hero() {
             &copy; {new Date().getFullYear()} DigiMarg. All rights reserved.
           </div>
         </div>
-//       </section>
+      </section>
 
-
-
-
-
-      
-  
     </>
   );
 }

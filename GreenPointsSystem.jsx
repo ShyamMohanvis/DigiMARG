@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { motion } from "framer-motion";
 import { FaLeaf, FaTrophy, FaMedal, FaCoins } from "react-icons/fa";
 
@@ -7,25 +7,39 @@ const GreenPointsSystem = ({ distance, busType, onPointsEarned }) => {
   const [totalCo2Saved, setTotalCo2Saved] = useState(0);
   const [showAnimation, setShowAnimation] = useState(false);
   const [leaderboard, setLeaderboard] = useState([]);
+  const previousDistanceRef = useRef(0);
 
   useEffect(() => {
-    // Calculate points for current trip
-    if (distance > 0) {
-      const co2Saved = (120 - 89) * distance; // Car vs Bus emissions
-      const newPoints = Math.round(co2Saved / 10);
-      
-      setPoints(prev => prev + newPoints);
-      setTotalCo2Saved(prev => prev + co2Saved);
-      
-      // Show animation
-      setShowAnimation(true);
-      setTimeout(() => setShowAnimation(false), 3000);
-      
-      if (onPointsEarned) {
-        onPointsEarned(newPoints, co2Saved);
+    // Compute incremental distance since last update to avoid double counting
+    const previousDistance = previousDistanceRef.current || 0;
+    const incrementalDistance = Math.max(0, (Number(distance) || 0) - previousDistance);
+
+    // Update previous for next render
+    previousDistanceRef.current = Number(distance) || 0;
+
+    if (incrementalDistance > 0) {
+      // Emission factors in g/km (car vs bus per passenger)
+      const carGPerKm = 120;
+      const busGPerKm = 40;
+      const savedPerKm = Math.max(0, carGPerKm - busGPerKm);
+      const co2SavedThisStep = savedPerKm * incrementalDistance; // grams
+      const pointsThisStep = Math.round(co2SavedThisStep / 100); // 100 g = 1 point
+
+      setPoints(prev => prev + pointsThisStep);
+      setTotalCo2Saved(prev => prev + co2SavedThisStep);
+
+      // Notify parent, if requested
+      if (typeof onPointsEarned === 'function' && (pointsThisStep > 0 || co2SavedThisStep > 0)) {
+        try {
+          onPointsEarned(pointsThisStep, co2SavedThisStep);
+        } catch {}
       }
+
+      setShowAnimation(true);
+      const t = setTimeout(() => setShowAnimation(false), 800);
+      return () => clearTimeout(t);
     }
-  }, [distance, busType, onPointsEarned]);
+  }, [distance, onPointsEarned]);
 
   const getLeaderboard = () => {
     return [

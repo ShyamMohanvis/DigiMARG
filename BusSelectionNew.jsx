@@ -1,11 +1,11 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { motion } from "framer-motion";
 import { FiMapPin, FiClock, FiUsers, FiPhone, FiNavigation } from "react-icons/fi";
 import { FaBrain, FaBus, FaRoute } from "react-icons/fa";
 import SmartAI from "./SmartAI";
 import RouteMap from "./RouteMap";
-import { getRouteByCities, getAllRoutes } from "../data/punjabRoutes";
+import { getRouteByCities, getAllRoutes } from "./data/punjabRoutes";
 
 export default function BusSelection() {
   const [searchParams] = useSearchParams();
@@ -13,6 +13,11 @@ export default function BusSelection() {
   const [selectedRoute, setSelectedRoute] = useState(null);
   const [selectedBus, setSelectedBus] = useState(null);
   const [showMap, setShowMap] = useState(false);
+  // Filters & sorting
+  const [filterType, setFilterType] = useState("all");
+  const [minSeats, setMinSeats] = useState(0);
+  const [sortBy, setSortBy] = useState("recommended");
+  const [query, setQuery] = useState("");
 
   const fromCity = searchParams.get('from') || '';
   const toCity = searchParams.get('to') || '';
@@ -47,6 +52,34 @@ export default function BusSelection() {
   const getRouteKey = () => {
     return selectedRoute?.id || 'PB001';
   };
+
+  const filteredBuses = useMemo(() => {
+    if (!selectedRoute) return [];
+    let list = [...selectedRoute.buses];
+    if (filterType !== 'all') {
+      list = list.filter(b => (b.type || '').toLowerCase().includes(filterType));
+    }
+    if (minSeats > 0) {
+      list = list.filter(b => (b.currentSeats || 0) >= Number(minSeats));
+    }
+    if (query.trim()) {
+      const q = query.trim().toLowerCase();
+      list = list.filter(b => `${b.name} ${b.busNumber}`.toLowerCase().includes(q));
+    }
+    if (sortBy === 'price_low') {
+      list.sort((a, b) => parseInt(a.fare.replace('₹','')) - parseInt(b.fare.replace('₹','')));
+    } else if (sortBy === 'price_high') {
+      list.sort((a, b) => parseInt(b.fare.replace('₹','')) - parseInt(a.fare.replace('₹','')));
+    } else if (sortBy === 'seats') {
+      list.sort((a, b) => (b.currentSeats || 0) - (a.currentSeats || 0));
+    }
+    return list;
+  }, [selectedRoute, filterType, minSeats, sortBy, query]);
+
+  const totalAvailableSeats = useMemo(() => {
+    if (!selectedRoute) return 0;
+    return selectedRoute.buses.reduce((sum, b) => sum + (b.currentSeats || 0), 0);
+  }, [selectedRoute]);
 
   if (!selectedRoute) {
     return (
@@ -98,6 +131,51 @@ export default function BusSelection() {
           </div>
         </motion.div>
 
+        {/* Filters & Sorting */}
+        <div className="bg-white rounded-xl shadow-md p-4 mb-6 border border-gray-100">
+          <div className="grid grid-cols-1 md:grid-cols-5 gap-3">
+            <input
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              placeholder="Search bus name or number"
+              className="px-3 py-2 border rounded-lg focus:ring-2 focus:ring-green-500"
+            />
+            <select
+              value={filterType}
+              onChange={(e) => setFilterType(e.target.value)}
+              className="px-3 py-2 border rounded-lg"
+            >
+              <option value="all">All types</option>
+              <option value="ac">AC</option>
+              <option value="sleeper">Sleeper</option>
+              <option value="non-ac">Non-AC</option>
+            </select>
+            <div className="flex items-center gap-2">
+              <label className="text-sm text-gray-600">Min seats</label>
+              <input
+                type="number"
+                min="0"
+                value={minSeats}
+                onChange={(e) => setMinSeats(e.target.value)}
+                className="w-full px-3 py-2 border rounded-lg"
+              />
+            </div>
+            <select
+              value={sortBy}
+              onChange={(e) => setSortBy(e.target.value)}
+              className="px-3 py-2 border rounded-lg"
+            >
+              <option value="recommended">Recommended</option>
+              <option value="price_low">Price: Low to High</option>
+              <option value="price_high">Price: High to Low</option>
+              <option value="seats">Most Seats</option>
+            </select>
+            <div className="flex items-center justify-end text-sm text-gray-600">
+              <span className="px-3 py-2 bg-gray-50 rounded-lg">Total seats: <span className="font-semibold text-green-700">{totalAvailableSeats}</span></span>
+            </div>
+          </div>
+        </div>
+
         {/* Map Toggle */}
         <div className="text-center mb-6">
           <button
@@ -134,7 +212,7 @@ export default function BusSelection() {
 
         {/* Bus List */}
         <div className="grid gap-6">
-          {selectedRoute.buses.map((bus, index) => (
+          {filteredBuses.map((bus, index) => (
             <motion.div
               key={bus.busNumber}
               initial={{ opacity: 0, y: 20 }}
@@ -151,7 +229,11 @@ export default function BusSelection() {
                     <div>
                       <h3 className="text-xl font-bold text-gray-800">{bus.name}</h3>
                       <p className="text-gray-600">Bus Number: {bus.busNumber}</p>
-                      <p className="text-sm text-gray-500">Type: {bus.type}</p>
+                      <div className="mt-1 flex items-center gap-2 text-sm">
+                        <span className="px-2 py-0.5 rounded-full bg-blue-50 text-blue-700 border border-blue-200">{bus.type}</span>
+                        <span className="px-2 py-0.5 rounded-full bg-green-50 text-green-700 border border-green-200">{bus.currentSeats}/{bus.capacity} seats</span>
+                        <span className="px-2 py-0.5 rounded-full bg-orange-50 text-orange-700 border border-orange-200">ETA {bus.eta}</span>
+                      </div>
                     </div>
                   </div>
                   
@@ -212,17 +294,25 @@ export default function BusSelection() {
                     </div>
                     <div>
                       <p className="text-gray-600">CO₂ Saved</p>
-                      <p className="font-semibold text-orange-600">{getDistanceForRoute() * 0.09} kg</p>
+                      <p className="font-semibold text-orange-600">{(getDistanceForRoute() * 0.09).toFixed(2)} kg</p>
                     </div>
                   </div>
                 </div>
 
-                <button
-                  onClick={() => handleBusSelect(bus)}
-                  className="w-full bg-gradient-to-r from-green-600 to-green-700 text-white font-bold py-4 px-6 rounded-xl hover:from-green-700 hover:to-green-800 transition-all duration-300 transform hover:scale-105 shadow-lg"
-                >
-                  Select & Track Bus
-                </button>
+                <div className="flex flex-col md:flex-row items-stretch gap-3">
+                  <button
+                    onClick={() => handleBusSelect(bus)}
+                    className="w-full md:w-auto flex-1 bg-gradient-to-r from-green-600 to-green-700 text-white font-bold py-3 px-6 rounded-xl hover:from-green-700 hover:to-green-800 transition-all duration-300 transform hover:scale-[1.01] shadow-lg"
+                  >
+                    Select & Track Bus
+                  </button>
+                  <button
+                    onClick={() => { setSelectedBus(bus); setShowMap(true); }}
+                    className="w-full md:w-auto px-6 py-3 rounded-xl border border-gray-200 hover:border-gray-300 bg-white text-gray-700 font-semibold"
+                  >
+                    View on Map
+                  </button>
+                </div>
               </div>
             </motion.div>
           ))}

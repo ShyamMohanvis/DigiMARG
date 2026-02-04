@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { FaBrain, FaTrafficLight, FaUsers, FaClock, FaLeaf } from "react-icons/fa";
-import { predictETA, predictSeatAvailability, calculateCarbonSavings } from "../services/aiPredictionService";
+import { predictETA, predictSeatAvailability, calculateCarbonSavings } from "./services/aiPredictionService";
 
 const AIPredictionDisplay = ({ 
   routeCoords, 

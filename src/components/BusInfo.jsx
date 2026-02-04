@@ -1,6 +1,7 @@
 
 
 import React from "react";
+import SmartAI from "../../SmartAI";
 import { useParams } from "react-router-dom";
 import { MapContainer, TileLayer, Marker, Popup } from "react-leaflet";
 import L from "leaflet";
@@ -197,7 +198,7 @@ export default function BusInfo() {
         </div>
 
         
-        {/* RIGHT BOX: Map and Location */}
+        {/* RIGHT BOX: Map and Location + AI */}
         <div
           className="bg-green-50 rounded-tr-3xl rounded-br-3xl p-8 flex flex-col items-center justify-start sticky top-16 z-30"
           style={{ alignSelf: "start" }} // Prevent sticky stretching when flex container
@@ -224,6 +225,17 @@ export default function BusInfo() {
     </Marker>
   </MapContainer>
 </div>
+          </div>
+
+          {/* AI Insights beside bus details */}
+          <div className="w-full mt-6">
+            <SmartAI
+              distanceKm={120}
+              currentSeats={bus.seatAvailable}
+              totalSeats={bus.seatCapacity}
+              routeId="PB001"
+              userId="demo-user"
+            />
           </div>
         </div>
       </div>

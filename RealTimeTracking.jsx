@@ -8,16 +8,18 @@ import {
   useMap,
 } from "react-leaflet";
 import L from "leaflet";
-import { db } from "../firebase";
+import { db } from "./firebase";
 import { onValue, ref } from "firebase/database";
 import { useSearchParams } from "react-router-dom";
-import { simulateBusMovement } from "../utils/testDataGenerator";
-import { getBusByNumber, getAllRoutes } from "../data/punjabRoutes";
+import { simulateBusMovement } from "./utils/testDataGenerator";
+import { getBusByNumber, getAllRoutes } from "./data/punjabRoutes";
+import { getRouteById } from "./data/punjabRoutes";
 import AIPredictionDisplay from "./AIPredictionDisplay";
 import GreenPointsSystem from "./GreenPointsSystem";
 import SmartAI from "./SmartAI";
 import "./AIPredictionDisplay.css";
 import "./GreenPointsSystem.css";
+import "./RealTimeTracking.css";
 
 // Custom icons
 const busIcon = L.icon({
@@ -143,6 +145,7 @@ const RealTimeTracking = () => {
   const [currentSeats, setCurrentSeats] = useState(25); // Mock current seats
   const [totalSeats, setTotalSeats] = useState(45); // Mock total seats
   const [greenPoints, setGreenPoints] = useState(0);
+  const [routeId, setRouteId] = useState("PB001");
 
   // Punjab routes and bus data with exact coordinates
   const punjabRoutes = {
@@ -280,6 +283,8 @@ const RealTimeTracking = () => {
     const urlFrom = searchParams.get('from');
     const urlTo = searchParams.get('to');
     const autoStart = searchParams.get('autoStart') === 'true';
+    const rid = searchParams.get('routeId');
+    if (rid) setRouteId(rid);
     
     if (urlBus) {
       setBusNumber(urlBus);
@@ -806,10 +811,10 @@ const RealTimeTracking = () => {
           {routeCoords.length > 0 && (
             <div className="ai-predictions-section">
               <SmartAI 
-                distanceKm={totalDistanceKm}
+                distanceKm={coveredDistanceKm}
                 currentSeats={currentSeats}
                 totalSeats={totalSeats}
-                routeId="PB001"
+                routeId={routeId}
                 userId="demo-user"
               />
             </div>
@@ -824,7 +829,7 @@ const RealTimeTracking = () => {
                 busNumber={busNumber}
                 currentSeats={currentSeats}
                 totalSeats={totalSeats}
-                distance={totalDistanceKm}
+                distance={coveredDistanceKm}
               />
             </div>
           )}
@@ -833,7 +838,7 @@ const RealTimeTracking = () => {
           {totalDistanceKm > 0 && (
             <div className="green-points-section">
               <GreenPointsSystem
-                distance={totalDistanceKm}
+                distance={coveredDistanceKm}
                 busType="standard"
                 onPointsEarned={(points, co2Saved) => {
                   setGreenPoints(prev => prev + points);

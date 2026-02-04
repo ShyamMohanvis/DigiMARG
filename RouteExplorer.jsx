@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { motion } from "framer-motion";
 import { FaMapMarkerAlt, FaClock, FaBus, FaRoute, FaEye } from "react-icons/fa";
-import { getAllRoutes } from "../data/punjabRoutes";
+import { getAllRoutes } from "./data/punjabRoutes";
 import RouteMap from "./RouteMap";
 
 export default function RouteExplorer() {

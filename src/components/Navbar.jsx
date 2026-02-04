@@ -1,6 +1,7 @@
 
 import React from "react";
 import { Link as ScrollLink } from "react-scroll";
+import { Link } from "react-router-dom";
 
 export default function Navbar() {
   return (
@@ -54,13 +55,11 @@ export default function Navbar() {
           </ScrollLink>
         </nav>
 
-        {/* Right: Admin Login (no redirect) */}
+        {/* Right: Admin Login */}
         <div className="flex items-center space-x-2">
-          <button
-            className="px-6 py-2 bg-green-600 text-white font-semibold rounded-lg shadow hover:bg-green-700 transition"
-          >
-            User Login
-          </button>
+          <Link to="/admin/login" className="px-6 py-2 bg-green-600 text-white font-semibold rounded-lg shadow hover:bg-green-700 transition">
+            Admin Login
+          </Link>
         </div>
 
       </div>

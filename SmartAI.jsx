@@ -1,12 +1,16 @@
 import React, { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { FaBrain, FaClock, FaLeaf, FaUsers, FaTrophy, FaTrafficLight } from "react-icons/fa";
-import { localAIServer } from "../services/aiApiServer";
+import { localAIServer } from "./services/aiApiServer";
 
 export default function SmartAI({ distanceKm, stopId, currentSeats, totalSeats, routeId, userId }) {
   const [aiData, setAiData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  // Interactive controls
+  const [trafficFactor, setTrafficFactor] = useState(1);
+  const [passengers, setPassengers] = useState(1);
+  const [showDetails, setShowDetails] = useState(false);
 
   useEffect(() => {
     async function fetchAI() {
@@ -26,17 +30,17 @@ export default function SmartAI({ distanceKm, stopId, currentSeats, totalSeats, 
         const dayOfWeek = day === 0 || day === 6 ? 'weekend' : 'weekday';
         
         // Simulate traffic factor (in real app, get from traffic API)
-        const trafficFactor = timeOfDay.includes('rush') ? 2 : 1;
+        const rushFactor = timeOfDay.includes('rush') ? 2 : 1;
         
         // Prepare request data
         const requestData = {
           distanceKm,
           avgSpeed: 40,
-          trafficFactor,
+          trafficFactor: trafficFactor || rushFactor,
           timeOfDay,
           weather: 'clear',
           busType: 'standard',
-          passengers: 1,
+          passengers,
           userId,
           currentSeats,
           totalSeats,
@@ -73,7 +77,7 @@ export default function SmartAI({ distanceKm, stopId, currentSeats, totalSeats, 
     if (distanceKm > 0) {
       fetchAI();
     }
-  }, [distanceKm, stopId, currentSeats, totalSeats, routeId, userId]);
+  }, [distanceKm, stopId, currentSeats, totalSeats, routeId, userId, trafficFactor, passengers]);
 
   if (loading) {
     return (
@@ -104,6 +108,22 @@ export default function SmartAI({ distanceKm, stopId, currentSeats, totalSeats, 
       animate={{ opacity: 1, y: 0 }}
       className="p-4 bg-white rounded-2xl shadow-lg border border-green-200"
     >
+      {/* Controls */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mb-4">
+        <div>
+          <label className="text-xs text-gray-600">Traffic level</label>
+          <input type="range" min="1" max="3" step="1" value={trafficFactor}
+            onChange={(e) => setTrafficFactor(Number(e.target.value))}
+            className="w-full" />
+          <div className="text-xs text-gray-500">{trafficFactor === 1 ? 'Normal' : trafficFactor === 2 ? 'Rush' : 'Heavy'}</div>
+        </div>
+        <div>
+          <label className="text-xs text-gray-600">Passengers</label>
+          <input type="number" min="1" value={passengers}
+            onChange={(e) => setPassengers(Number(e.target.value) || 1)}
+            className="w-full px-2 py-1 border rounded" />
+        </div>
+      </div>
       <div className="flex items-center gap-3 mb-4">
         <FaBrain className="text-blue-500 text-2xl" />
         <h2 className="text-xl font-bold text-gray-800">🤖 AI Insights</h2>
@@ -195,6 +215,12 @@ export default function SmartAI({ distanceKm, stopId, currentSeats, totalSeats, 
             <div>• Route popularity</div>
             <div>• Seasonal trends</div>
           </div>
+          <button onClick={() => setShowDetails(!showDetails)} className="mt-3 text-xs text-blue-600 hover:underline">{showDetails ? 'Hide' : 'Show'} details</button>
+          {showDetails && (
+            <div className="mt-2 text-xs text-gray-600">
+              <pre className="whitespace-pre-wrap">{JSON.stringify(aiData, null, 2)}</pre>
+            </div>
+          )}
         </div>
 
         {/* Green Points Display */}
