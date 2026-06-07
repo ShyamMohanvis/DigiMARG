@@ -1,6 +1,13 @@
-# DigiMARG - Bus Tracking System
+# 🚌 DigiMARG - Smart Bus Tracking System
 
-**DigiMARG (Mobility Assistance for Reliable Governance)** is a comprehensive real-time bus tracking and management system built with React, Firebase, and modern web technologies. The platform provides intelligent bus tracking, route exploration, AI-powered predictions, and a complete admin management system.
+[![Deployed on Netlify](https://img.shields.io/badge/Deployed%20on-Netlify-00C7B7?logo=netlify)](https://bus-tracking-systemm.netlify.app/)
+[![React](https://img.shields.io/badge/React-19.1.1-blue.svg?logo=react)](https://reactjs.org/)
+[![Tailwind CSS](https://img.shields.io/badge/Tailwind-4.1.12-38B2AC.svg?logo=tailwind-css)](https://tailwindcss.com/)
+[![Firebase](https://img.shields.io/badge/Firebase-12.2.1-FFCA28.svg?logo=firebase)](https://firebase.google.com/)
+
+**[🚀 View Live Demo](https://bus-tracking-systemm.netlify.app/)** | **[🐛 Report Bug](https://github.com/ShyamMohanvis/DigiMARG/issues)**
+
+**DigiMARG (Mobility Assistance for Reliable Governance)** is a comprehensive real-time bus tracking and management system built with React, Firebase, and Tailwind CSS. The platform provides intelligent bus tracking, route exploration, AI-powered ETA insights, and an innovative eco-friendly Carbon Reduction Initiative (CRI).
 
 ## 📋 Table of Contents
 
