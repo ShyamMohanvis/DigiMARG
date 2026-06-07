@@ -14,12 +14,9 @@ import { useSearchParams } from "react-router-dom";
 import { simulateBusMovement } from "./utils/testDataGenerator";
 import { getBusByNumber, getAllRoutes } from "./data/punjabRoutes";
 import { getRouteById } from "./data/punjabRoutes";
-import AIPredictionDisplay from "./AIPredictionDisplay";
+
 import GreenPointsSystem from "./GreenPointsSystem";
 import SmartAI from "./SmartAI";
-import "./AIPredictionDisplay.css";
-import "./GreenPointsSystem.css";
-import "./RealTimeTracking.css";
 
 // Custom icons
 const busIcon = L.icon({
@@ -445,7 +442,7 @@ const RealTimeTracking = () => {
       }
       
       testSimulationRef.current = simulateBusMovement(routeCoords, (testData) => {
-        console.log("Animation update:", testData);
+        // Removed console log to prevent console spam and improve performance
         setBusPos([testData.lat, testData.lng]);
       }, 3000); // 3 seconds for better visibility
       
@@ -599,217 +596,68 @@ const RealTimeTracking = () => {
   }, [busPos, timeline]);
 
   return (
-    <div className="layout">
-      <div className="header">
-        <div className="header-content">
-          <div className="logo">DigiMarg</div>
-          <div className="route-info">
-            <div className="route-details">
-              <span className="route-from">{from || "From"}</span>
-              <span className="route-arrow">→</span>
-              <span className="route-to">{to || "To"}</span>
-            </div>
-            {busNumber && (
-              <div className="bus-number-display">
-                Bus: {busNumber.toUpperCase()}
-              </div>
-            )}
-          </div>
-          <div className="header-actions">
-            <button className="back-to-search" onClick={() => window.location.href = '/'}>
-              ← Back to Search
-            </button>
-          </div>
-        </div>
+    <div className="relative w-full h-screen overflow-hidden bg-slate-100">
+      
+      {/* 1. Map container taking full screen */}
+      <div className="absolute inset-0 z-0">
+        <MapContainer
+          center={[31.1471, 75.3412]}
+          zoom={8}
+          style={{ height: "100%", width: "100%" }}
+          zoomControl={false}
+        >
+          <TileLayer
+            url="https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png"
+            attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+          />
+          {fromCoords && <Marker position={fromCoords} icon={startIcon}></Marker>}
+          {toCoords && <Marker position={toCoords} icon={endIcon}></Marker>}
+          {myLocation && <Marker position={myLocation} icon={myLocationIcon}></Marker>}
+          {routeCoords.length > 0 && (
+            <>
+              <Polyline positions={routeCoords} color="#10b981" weight={4} opacity={0.9} />
+              {timeline.map((t, i) => (
+                <Marker key={i} position={t.coords} icon={highlightIcon}></Marker>
+              ))}
+            </>
+          )}
+          {busPos && <Marker position={busPos} icon={busIcon}></Marker>}
+          <FitBounds coords={routeCoords} />
+        </MapContainer>
       </div>
 
-      <div className="content">
-        <aside className="sidebar">
-          <div className="sidebar-header">
-            <div className="header-top">
-              <div className="back-btn">←</div>
-              <div className="route-title">
-                {busNumber.toUpperCase()} to {to || "Destination"}
-              </div>
-              <div className="share-btn">Share</div>
-            </div>
-            
-            <div className="boarding-card">
-              <div className="card-icon">📍</div>
-              <div className="card-content">
-                <div className="card-title">Find your boarding point</div>
-                <div className="card-subtitle">{from || "Select departure"}</div>
-              </div>
-              <div className="card-arrow">›</div>
-            </div>
-            
-            {busInfo && (
-              <div className="bus-info-card">
-                <div className="card-icon">🚌</div>
-                <div className="card-content">
-                  <div className="card-title">Identify your bus</div>
-                  <div className="bus-name">{busInfo.name} - Bus {busNumber.toUpperCase()}</div>
-                  <div className="bus-direction">Direction {from} - {to}</div>
-                </div>
-                <div className="card-arrow">›</div>
-              </div>
+      {/* 2. Floating Header */}
+      <div className="absolute top-4 left-4 right-4 z-[1000] flex justify-between items-center bg-white/80 backdrop-blur-md px-6 py-4 rounded-2xl shadow-lg border border-white/40">
+        <div className="flex items-center gap-4">
+          <div className="bg-emerald-600 text-white px-4 py-2 rounded-xl font-bold text-lg shadow-md">
+            DigiMarg
+          </div>
+          <div className="flex flex-wrap items-center gap-3 text-slate-800 font-semibold text-lg ml-4">
+            <span>{from || "From"}</span>
+            <span className="text-emerald-500">→</span>
+            <span>{to || "To"}</span>
+            {busNumber && (
+              <span className="ml-4 bg-slate-200 text-slate-700 px-3 py-1 rounded-full text-sm">
+                Bus {busNumber.toUpperCase()}
+              </span>
             )}
-            
-            <div className="delay-status">
-              <div className="delay-text">On time</div>
-              <div className="delay-close">×</div>
-            </div>
-            
-            <div className="date-display">
-              <span className="calendar-icon">📅</span>
-              <span className="date-text">Sat, Sep 6</span>
-            </div>
           </div>
+        </div>
+        <button 
+          onClick={() => window.location.href = '/'}
+          className="bg-slate-800 hover:bg-slate-700 text-white px-5 py-2 rounded-xl text-sm font-semibold transition-colors shadow-md whitespace-nowrap pointer-events-auto"
+        >
+          ← Back
+        </button>
+      </div>
+
+      {/* 3. Floating Left Panel */}
+      <div className="absolute top-28 left-4 w-96 max-h-[calc(100vh-8rem)] overflow-y-auto z-[1000] rounded-3xl hide-scrollbar pointer-events-none">
+        <div className="flex flex-col gap-4 pb-8 pointer-events-auto">
           
-          <div className="itinerary">
-            <div className="timeline">
-              {timeline.map((t, idx) => (
-                <div className={`timeline-item ${idx < currentIndex ? 'reached' : ''} ${idx === currentIndex ? 'active' : ''}`} key={idx}>
-                  <div className="timeline-dot">
-                    {idx === currentIndex && <div className="bus-icon">🚌</div>}
-                    {idx === timeline.length - 1 && <div className="end-icon">■</div>}
-                  </div>
-                  <div className="timeline-content">
-                    <div className="timeline-time">{t.timeStr}</div>
-                    <div className="timeline-location">{t.name || `Stop ${idx + 1}`}</div>
-                    {idx < currentIndex && <div className="timeline-actual">Actual {t.timeStr}</div>}
-                  </div>
-                </div>
-              ))}
-            </div>
-            <div className="timezone">All times: Asia/Kolkata</div>
-          </div>
-          
-          {/* Animation Controls */}
+          {/* Smart AI Card at the top */}
           {routeCoords.length > 0 && (
-            <div className="animation-controls">
-              <div className="controls-header">
-                <h3 className="controls-title">Animation Controls</h3>
-                <div className="status-indicator">
-                  <span className={`status-dot ${isAnimating ? 'active' : ''}`}></span>
-                  <span className="status-text">
-                    {isAnimating ? 'Animating' : live ? (testMode ? 'Test Mode' : 'Live Tracking') : 'Stopped'}
-                  </span>
-                  {searchParams.get('autoStart') === 'true' && (
-                    <span className="auto-start-indicator">🚀 Auto-Started</span>
-                  )}
-                </div>
-              </div>
-              
-              {/* Test Mode Toggle */}
-              <div className="test-mode-toggle">
-                <label className="toggle-label">
-                  <input
-                    type="checkbox"
-                    checked={testMode}
-                    onChange={(e) => setTestMode(e.target.checked)}
-                    className="toggle-input"
-                  />
-                  <span className="toggle-slider"></span>
-                  <span className="toggle-text">Test Mode (Simulation)</span>
-                </label>
-              </div>
-              
-              <div className="control-buttons">
-                <button 
-                  onClick={() => {
-                    console.log("Manual start clicked");
-                    console.log("Current state - live:", live, "routeCoords:", routeCoords.length, "testMode:", testMode);
-                    if (routeCoords.length === 0) {
-                      alert("No route loaded. Please search for a bus first.");
-                      return;
-                    }
-                    setLive(true);
-                    setIsAnimating(true);
-                  }}
-                  disabled={isAnimating}
-                  className="control-btn start-btn"
-                >
-                  ▶️ Start Animation
-                </button>
-                <button 
-                  onClick={() => {
-                    console.log("Pause clicked");
-                    setLive(false);
-                    setIsAnimating(false);
-                    if (testSimulationRef.current) {
-                      clearInterval(testSimulationRef.current);
-                    }
-                  }}
-                  disabled={!isAnimating}
-                  className="control-btn pause-btn"
-                >
-                  ⏸️ Pause
-                </button>
-                <button 
-                  onClick={() => {
-                    console.log("Reset clicked");
-                    setLive(false);
-                    setIsAnimating(false);
-                    if (testSimulationRef.current) {
-                      clearInterval(testSimulationRef.current);
-                    }
-                    if (routeCoords.length > 0) {
-                      setBusPos(routeCoords[0]);
-                    }
-                  }}
-                  className="control-btn reset-btn"
-                >
-                  🔄 Reset
-                </button>
-                <button 
-                  onClick={() => {
-                    console.log("Test animation clicked");
-                    if (routeCoords.length === 0) {
-                      // Use default route for testing
-                      const defaultRoute = [
-                        [31.6340, 74.8723], // Amritsar Bus Stand
-                        [31.6200, 74.8765], // Golden Temple
-                        [31.6206, 74.8769], // Jallianwala Bagh
-                        [31.6210, 74.8770], // Partition Museum
-                        [31.6000, 74.6000], // Attari Railway Station
-                        [31.5820, 74.5730]  // Wagah Border
-                      ];
-                      setRouteCoords(defaultRoute);
-                      setBusPos(defaultRoute[0]);
-                      setFrom("Amritsar");
-                      setTo("Wagah Border");
-                    }
-                    setLive(true);
-                    setIsAnimating(true);
-                  }}
-                  className="control-btn test-btn"
-                  style={{backgroundColor: '#10b981', color: 'white'}}
-                >
-                  🧪 Test Animation
-                </button>
-              </div>
-              
-              <div className="tracking-info">
-                <div className="info-item">
-                  <span className="info-label">Total Distance:</span>
-                  <span className="info-value">{totalDistanceKm.toFixed(1)} km</span>
-                </div>
-                <div className="info-item">
-                  <span className="info-label">Covered:</span>
-                  <span className="info-value">{coveredDistanceKm.toFixed(1)} km</span>
-                </div>
-                <div className="info-item">
-                  <span className="info-label">ETA:</span>
-                  <span className="info-value">{etaText}</span>
-                </div>
-              </div>
-            </div>
-          )}
-          
-          {/* Smart AI Insights */}
-          {routeCoords.length > 0 && (
-            <div className="ai-predictions-section">
+            <div className="shadow-2xl rounded-3xl overflow-hidden border border-white/40 backdrop-blur-md">
               <SmartAI 
                 distanceKm={coveredDistanceKm}
                 currentSeats={currentSeats}
@@ -820,68 +668,162 @@ const RealTimeTracking = () => {
             </div>
           )}
 
-          {/* Legacy AI Predictions */}
+          {/* Controls Card */}
           {routeCoords.length > 0 && (
-            <div className="ai-predictions-section">
-              <AIPredictionDisplay
-                routeCoords={routeCoords}
-                currentPosition={busPos}
-                busNumber={busNumber}
-                currentSeats={currentSeats}
-                totalSeats={totalSeats}
-                distance={coveredDistanceKm}
-              />
+            <div className="bg-white/90 backdrop-blur-md p-5 rounded-3xl shadow-xl border border-white/40">
+              <div className="flex justify-between items-center mb-4">
+                <h3 className="font-bold text-slate-800">Animation Controls</h3>
+                <div className="flex items-center gap-2">
+                  <span className={`w-2.5 h-2.5 rounded-full ${isAnimating ? 'bg-emerald-500 animate-pulse' : 'bg-slate-300'}`}></span>
+                  <span className="text-xs font-semibold text-slate-500">
+                    {isAnimating ? 'Running' : 'Stopped'}
+                  </span>
+                </div>
+              </div>
+
+              <label className="flex items-center gap-3 cursor-pointer mb-4 p-3 bg-slate-50 rounded-xl border border-slate-100">
+                <input
+                  type="checkbox"
+                  checked={testMode}
+                  onChange={(e) => setTestMode(e.target.checked)}
+                  className="sr-only"
+                />
+                <div className={`w-11 h-6 rounded-full transition-colors relative ${testMode ? 'bg-emerald-500' : 'bg-slate-300'}`}>
+                  <div className={`absolute top-1 left-1 bg-white w-4 h-4 rounded-full transition-transform ${testMode ? 'translate-x-5' : ''}`}></div>
+                </div>
+                <span className="text-sm font-semibold text-slate-700">Test Mode (Simulation)</span>
+              </label>
+
+              <div className="grid grid-cols-2 gap-2 mb-4">
+                <button 
+                  onClick={() => { setLive(true); setIsAnimating(true); }}
+                  disabled={isAnimating}
+                  className="bg-emerald-500 hover:bg-emerald-600 disabled:opacity-50 text-white py-2 rounded-xl text-sm font-semibold transition-colors"
+                >
+                  ▶️ Start
+                </button>
+                <button 
+                  onClick={() => {
+                    setLive(false); setIsAnimating(false);
+                    if (testSimulationRef.current) clearInterval(testSimulationRef.current);
+                  }}
+                  disabled={!isAnimating}
+                  className="bg-amber-500 hover:bg-amber-600 disabled:opacity-50 text-white py-2 rounded-xl text-sm font-semibold transition-colors"
+                >
+                  ⏸️ Pause
+                </button>
+                <button 
+                  onClick={() => {
+                    setLive(false); setIsAnimating(false);
+                    if (testSimulationRef.current) clearInterval(testSimulationRef.current);
+                    if (routeCoords.length > 0) setBusPos(routeCoords[0]);
+                  }}
+                  className="bg-blue-500 hover:bg-blue-600 text-white py-2 rounded-xl text-sm font-semibold transition-colors"
+                >
+                  🔄 Reset
+                </button>
+                <button 
+                  onClick={() => {
+                    if (routeCoords.length === 0) {
+                      const defaultRoute = [[31.6340, 74.8723], [31.6200, 74.8765], [31.5820, 74.5730]];
+                      setRouteCoords(defaultRoute); setBusPos(defaultRoute[0]);
+                      setFrom("Amritsar"); setTo("Wagah Border");
+                    }
+                    setLive(true); setIsAnimating(true);
+                  }}
+                  className="bg-slate-800 hover:bg-slate-900 text-white py-2 rounded-xl text-sm font-semibold transition-colors"
+                >
+                  🧪 Test
+                </button>
+              </div>
+
+              <div className="bg-slate-50 rounded-xl p-3 grid grid-cols-3 gap-2 border border-slate-100 divide-x divide-slate-200">
+                <div className="text-center">
+                  <div className="text-[10px] text-slate-500 uppercase font-bold mb-1">Total</div>
+                  <div className="text-sm font-bold text-slate-800">{totalDistanceKm.toFixed(1)} <span className="text-[10px]">km</span></div>
+                </div>
+                <div className="text-center">
+                  <div className="text-[10px] text-slate-500 uppercase font-bold mb-1">Covered</div>
+                  <div className="text-sm font-bold text-emerald-600">{coveredDistanceKm.toFixed(1)} <span className="text-[10px]">km</span></div>
+                </div>
+                <div className="text-center">
+                  <div className="text-[10px] text-slate-500 uppercase font-bold mb-1">ETA</div>
+                  <div className="text-sm font-bold text-slate-800">{etaText}</div>
+                </div>
+              </div>
             </div>
           )}
-          
-          {/* Green Points System */}
-          {totalDistanceKm > 0 && (
-            <div className="green-points-section">
-              <GreenPointsSystem
+
+          {/* Timeline Card */}
+          {timeline.length > 0 && (
+            <div className="bg-white/90 backdrop-blur-md p-5 rounded-3xl shadow-xl border border-white/40">
+              <h3 className="font-bold text-slate-800 mb-4">Itinerary</h3>
+              <div className="relative pl-4">
+                <div className="absolute left-[7px] top-2 bottom-2 w-0.5 bg-slate-200"></div>
+                {timeline.map((t, idx) => {
+                  const isReached = idx <= currentIndex;
+                  const isActive = idx === currentIndex;
+                  return (
+                    <div key={idx} className="relative mb-6 last:mb-0 pl-6">
+                      <div className={`absolute left-[-5px] top-1 w-4 h-4 rounded-full border-2 bg-white flex items-center justify-center z-10
+                        ${isActive ? 'border-emerald-500 shadow-[0_0_0_4px_rgba(16,185,129,0.2)]' : isReached ? 'border-emerald-500 bg-emerald-500' : 'border-slate-300'}
+                      `}>
+                        {isActive && <div className="text-[8px]">🚌</div>}
+                      </div>
+                      <div className="bg-white p-3 rounded-xl shadow-sm border border-slate-100">
+                        <div className="text-xs font-bold text-slate-800">{t.timeStr}</div>
+                        <div className="text-sm text-slate-600">{t.name || `Stop ${idx + 1}`}</div>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+
+        </div>
+      </div>
+
+      {/* 4. Floating Green Points Pill */}
+      {totalDistanceKm > 0 && (
+        <div className="absolute top-28 right-4 z-[1000] transform transition-transform hover:scale-105 pointer-events-auto">
+          <div className="bg-white/90 backdrop-blur-md shadow-xl rounded-2xl border border-white/40 overflow-hidden">
+             <GreenPointsSystem
                 distance={coveredDistanceKm}
                 busType="standard"
                 onPointsEarned={(points, co2Saved) => {
                   setGreenPoints(prev => prev + points);
                 }}
               />
-            </div>
-          )}
-        </aside>
-        
-        <div className="map-wrap">
-          <button className="location-control" onClick={handleMyLocation} title="My Location">
-            📍
-          </button>
-          <MapContainer
-            center={[31.1471, 75.3412]}
-            zoom={8}
-            style={{ height: "100%", width: "100%" }}
-          >
-            <TileLayer
-              url="https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png"
-              attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>'
-            />
-
-            {fromCoords && <Marker position={fromCoords} icon={startIcon}></Marker>}
-            {toCoords && <Marker position={toCoords} icon={endIcon}></Marker>}
-            {myLocation && <Marker position={myLocation} icon={myLocationIcon}></Marker>}
-
-            {routeCoords.length > 0 && (
-              <>
-                <Polyline positions={routeCoords} color="#2e7d32" weight={3} opacity={0.8} />
-                {timeline.map((t, i) => (
-                  <Marker key={i} position={t.coords} icon={highlightIcon}></Marker>
-                ))}
-              </>
-            )}
-            {busPos && <Marker position={busPos} icon={busIcon}></Marker>}
-
-            <FitBounds coords={routeCoords} />
-          </MapContainer>
+          </div>
         </div>
-      </div>
+      )}
+      
+      {/* 5. Location Control */}
+      <button 
+        onClick={handleMyLocation} 
+        className="absolute bottom-8 right-4 z-[1000] w-14 h-14 bg-white rounded-full flex items-center justify-center shadow-xl border border-slate-100 hover:bg-slate-50 transition-colors text-2xl pointer-events-auto"
+        title="My Location"
+      >
+        📍
+      </button>
+
+      {/* Hide scrollbar styles locally */}
+      <style>{`
+        .hide-scrollbar::-webkit-scrollbar {
+          display: none;
+        }
+        .hide-scrollbar {
+          -ms-overflow-style: none;
+          scrollbar-width: none;
+        }
+        .leaflet-container {
+          font-family: inherit;
+        }
+      `}</style>
     </div>
   );
+
 };
 
 export default RealTimeTracking;

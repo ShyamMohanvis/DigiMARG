@@ -80,12 +80,18 @@ export const mockAIEndpoint = async (requestData) => {
       eta: {
         eta: Math.max(5, Math.round(distanceKm * 1.5 + Math.random() * 10)),
         confidence: Math.random() > 0.5 ? 'High' : 'Medium',
-        factors: {
-          baseTime: Math.round(distanceKm * 1.2),
-          trafficDelay: Math.round(Math.random() * 5),
-          historicalFactor: Math.round(Math.random() * 3),
-          timeOfDay: 'normal',
-          weather: 'clear'
+        get factors() {
+          const totalEta = this.eta;
+          const traffic = Math.round(Math.random() * 5);
+          const history = Math.round(Math.random() * 3);
+          const base = Math.max(1, totalEta - traffic - history);
+          return {
+            baseTime: base,
+            trafficDelay: traffic,
+            historicalFactor: history,
+            timeOfDay: 'normal',
+            weather: 'clear'
+          };
         }
       },
       carbon: {

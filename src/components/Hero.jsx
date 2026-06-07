@@ -1,7 +1,7 @@
 
 
 import React, { useEffect, useState } from "react";
-import { useNavigate, Link } from "react-router-dom"; // Import Link here
+import { useNavigate, Link, useLocation } from "react-router-dom";
 import { ArrowLeftRight } from "lucide-react";
 import { motion } from "framer-motion";
 import { FaMedal, FaFacebookF, FaTwitter, FaLinkedinIn, FaInstagram } from "react-icons/fa";
@@ -38,8 +38,9 @@ export default function Hero() {
   const [result, setResult] = useState({ co2Saved: 0, points: 0 });
   const navigate = useNavigate();
 
-  // Safer sizing for Confetti (prevents window undefined in some setups)
   const [confettiSize, setConfettiSize] = useState({ w: 0, h: 0 });
+  const location = useLocation();
+
   useEffect(() => {
     const setSize = () =>
       setConfettiSize({
@@ -50,6 +51,19 @@ export default function Hero() {
     window.addEventListener("resize", setSize);
     return () => window.removeEventListener("resize", setSize);
   }, []);
+
+  // Handle scrolling when navigated with a hash (e.g. /#features)
+  useEffect(() => {
+    if (location.hash) {
+      const elementId = location.hash.replace("#", "");
+      setTimeout(() => {
+        const element = document.getElementById(elementId);
+        if (element) {
+          element.scrollIntoView({ behavior: "smooth" });
+        }
+      }, 100);
+    }
+  }, [location]);
 
   const distances = {
     "amritsar-chandigarh": 240,
@@ -71,14 +85,19 @@ export default function Hero() {
     }
   };
 
+  const [errorMsg, setErrorMsg] = useState("");
+
   const handleCalculate = (e) => {
     e.preventDefault();
+    setErrorMsg("");
     const key = `${source.toLowerCase().trim()}-${destination.toLowerCase().trim()}`;
-    const distance = distances[key];
+    let distance = distances[key] || distances[`${destination.toLowerCase().trim()}-${source.toLowerCase().trim()}`];
+    
+    // Fallback: generate a deterministic distance based on string length if not found
     if (!distance) {
-      alert("Distance not found for the given source and destination. Please try another pair.");
-      return;
+      distance = (source.length + destination.length) * 15;
     }
+    
     const co2Saved = (carCO2PerKm - busCO2PerPassengerKm) * distance;
     const points = Math.floor(co2Saved / 100);
     setResult({ co2Saved, points });

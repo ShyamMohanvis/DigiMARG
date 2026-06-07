@@ -18,35 +18,56 @@ export const generateTestBusData = (busNumber, routeCoords) => {
 };
 
 export const simulateBusMovement = (routeCoords, callback, interval = 3000) => {
-  if (!routeCoords || routeCoords.length === 0) {
-    console.error("simulateBusMovement: No route coordinates provided");
+  if (!routeCoords || routeCoords.length < 2) {
+    console.error("simulateBusMovement: At least 2 coordinates required");
     return null;
   }
   
-  console.log("simulateBusMovement: Starting with", routeCoords.length, "coordinates");
-  console.log("simulateBusMovement: Route coordinates:", routeCoords);
+  console.log("simulateBusMovement: Starting smooth animation with", routeCoords.length, "coordinates");
   
   let currentIndex = 0;
+  let currentPos = [...routeCoords[0]];
+  
+  // Update at 60FPS (~16ms), or let's use 50ms for performance
+  const tickRate = 50; 
+  // Speed is normally distance / time. 
+  // We want the bus to move between nodes relatively quickly for testing.
+  const speed = 0.0005; // degree change per 50ms
+  
   const intervalId = setInterval(() => {
-    if (currentIndex >= routeCoords.length) {
-      console.log("simulateBusMovement: Reached end of route, restarting");
+    let nextIndex = currentIndex + 1;
+    if (nextIndex >= routeCoords.length) {
+      // Loop back or stay at end. Let's loop back for testing.
       currentIndex = 0;
+      nextIndex = 1;
+      currentPos = [...routeCoords[0]];
     }
     
-    const [lat, lng] = routeCoords[currentIndex];
+    const targetPos = routeCoords[nextIndex];
+    const dx = targetPos[0] - currentPos[0];
+    const dy = targetPos[1] - currentPos[1];
+    const dist = Math.sqrt(dx * dx + dy * dy);
+    
+    if (dist <= speed) {
+      // We reached the target node, move to next
+      currentPos = [...targetPos];
+      currentIndex = nextIndex;
+    } else {
+      // Interpolate towards target
+      currentPos[0] += (dx / dist) * speed;
+      currentPos[1] += (dy / dist) * speed;
+    }
+    
     const testData = {
-      lat: lat + (Math.random() - 0.5) * 0.0005,
-      lng: lng + (Math.random() - 0.5) * 0.0005,
+      lat: currentPos[0],
+      lng: currentPos[1],
       timestamp: Date.now(),
       speed: Math.floor(Math.random() * 15) + 35,
-      direction: Math.floor(Math.random() * 360)
+      direction: Math.atan2(dy, dx) * (180 / Math.PI)
     };
     
-    console.log(`simulateBusMovement: Moving to point ${currentIndex + 1}/${routeCoords.length}:`, testData);
     callback(testData);
-    
-    currentIndex = (currentIndex + 1) % routeCoords.length;
-  }, interval);
+  }, tickRate);
   
   return intervalId;
 };

@@ -15,7 +15,9 @@ export default function SmartAI({ distanceKm, stopId, currentSeats, totalSeats, 
   useEffect(() => {
     async function fetchAI() {
       try {
-        setLoading(true);
+        if (!aiData) {
+          setLoading(true);
+        }
         setError(null);
         
         // Determine time of day

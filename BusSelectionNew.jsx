@@ -107,7 +107,9 @@ export default function BusSelection() {
           <div className="bg-white rounded-lg shadow-lg p-6 max-w-2xl mx-auto">
             <div className="flex items-center justify-center gap-4 mb-4">
               <FaRoute className="text-blue-500 text-2xl" />
-              <h2 className="text-2xl font-bold text-gray-800">{selectedRoute.route}</h2>
+              <h2 className="text-2xl font-bold text-gray-800">
+                {fromCity && toCity ? `${fromCity} → ${toCity}` : selectedRoute.route}
+              </h2>
             </div>
             
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">

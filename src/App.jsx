@@ -16,6 +16,7 @@ import TransportManager from "./components/TransportManager"; // Transport manag
 import RealTimeTracking from "../RealTimeTracking.jsx";
 import RouteExplorer from "../RouteExplorer.jsx";
 import BusSelectionNew from "../BusSelectionNew.jsx";
+import NotFound from "./components/NotFound";
 
 const App = () => (
   <Router>
@@ -38,6 +39,9 @@ const App = () => (
           <Route path="/admin" element={<AdminHome />} />
           <Route path="/admin/conductor" element={<ConductorPanel />} />
           <Route path="/admin/manager" element={<TransportManager />} />
+          
+          {/* Fallback route */}
+          <Route path="*" element={<NotFound />} />
         </Routes>
       </main>
 
