@@ -12,6 +12,7 @@
 ## 📋 Table of Contents
 
 - [Project Overview](#project-overview)
+- [Architecture & System Design](ARCHITECTURE.md)
 - [Features](#features)
 - [Technology Stack](#technology-stack)
 - [Project Structure](#project-structure)
